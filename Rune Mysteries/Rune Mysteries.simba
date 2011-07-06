@@ -1,0 +1,104 @@
+{==============================================================================]
+|                                    Title                                     |
+|                                  Subtitle!                                   |
+|                                Version: 0.00                                 |
+|                                   Author                                     |
+[==============================================================================]
+| Description:                                                                 |
+|                                                                              |
+[==============================================================================]
+| Setup:                                                                       |
+|            1.                                                                |
+|            2.                                                                |
+|            3.                                                                |
+|            4.                                                                |
+[==============================================================================]
+| Features:                                                                    |
+|            *                          *                                      |
+|            *                          *                                      |
+|            *                          *                                      |
+|            *                          *                                      |
+[==============================================================================]
+| Version:                                                                     |
+|            0.00 -                                                            |
+|            0.00 -                                                            |
+|            0.00 -                                                            |
+[==============================================================================]
+| Notes:                                                                       |
+[==============================================================================]
+| Future                                                                       |
+| Updates:                                                                     |
+[==============================================================================]
+| Random Shit:                                                                 |
+|                                                                              |
+|                                                                              |
+|                                                                              |
+|                                                                              |
+|                                                                              |
+[==============================================================================}
+program RuneMysteries;
+{$DEFINE SMART} // Comment line if not using SMART
+{$I SRL/SRL.scar}
+{$I SRL/SRL/Skill/Magic.scar}
+
+{******************************************************************************)
+                                  Setup Here
+*******************************************************************************}
+
+procedure SetupSmart;
+begin
+  Smart_Server      := 152;
+  Smart_Members     := True;
+  Smart_Signed      := True;
+  Smart_SuperDetail := False;
+end;
+
+procedure DeclarePlayers;
+begin
+  HowManyPlayers := 1;
+  NumberOfPlayers(HowManyPlayers);
+  CurrentPlayer := 0;
+
+  with Players[0] do
+  begin
+    Name        := 'Username';
+    Pass        := 'Password';
+    Nick        := '3 - 4 Letters of Username';
+    BoxRewards  := ['Lamp', 'Coins'];           // Box Reward
+    LampSkill   := 'Prayer';                    // Skill to advance with Lamp Reward
+    Active      := True;                        // Active ?
+  end;
+
+  {
+  with Players[1] do
+  begin
+    Name        := 'Username';
+    Pass        := 'Password';
+    Nick        := '3 - 4 Letters of Username';
+    BoxRewards  := ['Lamp', 'Coins'];           // Box Reward
+    LampSkill   := 'Prayer';                    // Skill to advance with Lamp Reward
+    Active      := True;                        // Active ?
+  end;
+  }
+
+end;
+
+{******************************************************************************)
+                                  End Setup
+*******************************************************************************}
+
+{*******************************************************************************
+Constants and Vars
+*******************************************************************************}
+const
+  // Script
+    SCRIPT_VER  = 0.00;
+    MOUSE_SPEED = 11;
+
+begin
+  SetupSRL;
+  SetupSmart;
+  DeclarePlayers;
+  SetupSpells;
+  SortBook(BookSort_Teleport);
+end.
