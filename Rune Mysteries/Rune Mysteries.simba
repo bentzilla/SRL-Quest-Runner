@@ -40,6 +40,7 @@
 program RuneMysteries;
 {$DEFINE SMART} // Comment line if not using SMART
 {$I SRL/SRL.scar}
+{$i srl/srl/misc/paintsmart.scar}
 {$I SRL/SRL/Skill/Magic.scar}
 
 {******************************************************************************)
@@ -88,13 +89,191 @@ end;
                                   End Setup
 *******************************************************************************}
 
+
+
+
+
+
+
+
+
+
+
+
+
+
 {*******************************************************************************
-Constants and Vars
+                              Constants and Vars
 *******************************************************************************}
+
 const
   // Script
     SCRIPT_VER  = 0.00;
     MOUSE_SPEED = 11;
+
+{*******************************************************************************
+                            End Constants and Vars
+*******************************************************************************}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+{*******************************************************************************
+                                   Script
+*******************************************************************************}
+
+function PlayerIdle: Boolean;
+var
+  MinPixelShift, MaxPixelShift, Interval, MaxTime, WaitTime, AVG: Integer;
+  PixelBox : TBox;
+begin
+
+  MinPixelShift := 0;
+  MaxPixelShift := 60;
+  PixelBox := IntToBox(MSCX - 10, MSCY - 25, MSCX + 15, MSCY + 15);//Players Box
+  Interval := 25;
+  MaxTime := 125;
+  WaitTime := 500;
+
+
+  Avg := AveragePixelShift(PixelBox, Interval, MaxTime);
+  Result := InRange(Avg, MinPixelShift, MaxPixelShift);
+
+  if (Result) then
+    Writeln('Player animation: Idle');
+end;
+
+function SecondFloor : Boolean;
+var
+  x, y: Integer;
+begin
+  //Result := CountColorTolerance(131333, MMX1, MMY1, MMX2, MMY2, 4) > 1200;
+  Result := (not(FindSymbol(X, Y, 'water')));
+end;
+
+function UpLumbridgeStairs: Boolean;
+var
+  X, Y, I, C , F, n: Integer;
+  TPA : TPointArray;
+  ATPA : T2DPointArray;
+  TB : TBox;
+  BadBoxes: TBoxArray;
+
+begin
+  FindColorsTolerance(TPA, 4871776, MSCX - 140, MSCY - 140, MSCX - 10, MSCY - 10, 15);
+  if (Length(TPA) < 1) then
+  begin
+    Writeln('No stairs');
+    Exit;
+  end;
+  SortTPAFrom(TPA, Point(MSCX, MSCY));
+  ATPA := TPAToATPA(TPA, 7);
+  SortATPAFrom(ATPA, Point(MSCX, MSCY));
+  C := High(ATPA);
+  drawDotsMulti(true, ATPA);
+  for I := 0 to C do
+  begin
+    TB := GetTPABounds(ATPA[I]);
+
+    if (TB.X2 - TB.X1 <= 6) and (TB.Y2 - TB.Y1 <= 6) then
+      Continue;
+
+    MiddleTPAEx(ATPA[i], X, Y);
+    for F := 0 to High(BadBoxes) do
+    begin
+      if (PointInBox(Point(X, Y), BadBoxes[F])) then
+      begin
+        N := F;
+        Break;
+      end;
+    end;
+    if (Length(BadBoxes) > 0) then
+    if (PointInBox(Point(X, Y), BadBoxes[N])) then
+    begin
+      Writeln('Point was in bad box[ '+ToStr(N)+']');
+      N := 0;
+
+      Continue;
+    end;
+    if (X > MSCX) then
+      Continue;
+    if (Y > MSCY) then
+      Continue;
+    MMouse(X - 7, Y - 7, 4, 4);
+    if (WaitUpText('tair', 200)) then
+    begin
+      GetMousePos(X, Y);
+      Mouse(X, Y, 0, 0, False);
+      if (WaitOption('limb-up', 500)) then
+      begin
+        FFlag(0);
+        Result := WaitFunc(@SecondFloor, 200, 5000);
+        Wait(1000 + Random(1000));
+        Exit;
+      end;
+    end else
+    begin
+      SetLength(BadBoxes, length(BadBoxes) + 1);
+      BadBoxes[high(BadBoxes)] := IntToBox(X - 16, Y - 16, X + 16, Y + 16);
+    end;
+  end;
+end;
+
+function WalkTo(Color, Tolerance, RX, RY: Integer; SortFrom: TPoint ): Boolean;
+var
+  i, x, y: Integer;
+  TPA: TPointArray;
+begin
+  if not LoggedIn then Exit;
+
+  FindNormalRandoms;
+
+
+  FindColorsSpiralTolerance(MMCX, MMCY, TPA, Color, MMX1, MMY1, MMX2, MMY2, Tolerance);
+  SortTPAFrom(TPA, SortFrom);
+
+  for i := 0 to High(TPA) do
+  begin
+    x := TPA[i].x;
+    y := TPA[i].y;
+
+    if (not rs_OnMinimap(x + rx, y + ry)) then
+      Continue;
+
+    Mouse(x + rx, y + ry, 0, 0, True);
+    FFlag(6);
+    Wait(1400 + Random(1400));
+    Result := True;
+    Break;
+  end;
+end;
+
+{*******************************************************************************
+                                  End Script
+*******************************************************************************}
+
+
+
+
+
+
+
+
+
+
+
 
 begin
   SetupSmart;
@@ -102,4 +281,22 @@ begin
   DeclarePlayers;
   SetupSpells;
   SortBook(BookSort_Teleport);
+  Cast('lumbridge home teleport', False);
+  Wait(15000 + Random(4000));
+  Writeln('In Lumbridge');
+  SetAngle(True);
+  Writeln('Fixed the compass angle');
+  if WalkTo(9145483, 19, 0, 0, Point(569, 52)) then
+  begin
+    Writeln('Walked to the stair case');
+    if UpLumbridgeStairs then
+    begin
+      Writeln('Arrived at the second floor');
+      if (WalkTo(758, 5, 2, 2, Point(632, 113)) then
+      begin
+        Writeln('Arrived at door');
+        Writeln('Door finding here');
+      end;
+    end;
+  end;
 end.
