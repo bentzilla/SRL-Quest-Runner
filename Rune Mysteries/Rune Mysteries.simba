@@ -36,6 +36,7 @@
 |                                                                              |
 |                                                                              |
 [==============================================================================}
+
 program RuneMysteries;
 {$DEFINE SMART} // Comment line if not using SMART
 {$I SRL/SRL.scar}
@@ -96,8 +97,8 @@ const
     MOUSE_SPEED = 11;
 
 begin
-  SetupSRL;
   SetupSmart;
+  SetupSRL;
   DeclarePlayers;
   SetupSpells;
   SortBook(BookSort_Teleport);
