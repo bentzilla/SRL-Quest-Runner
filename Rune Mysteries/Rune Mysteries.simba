@@ -50,7 +50,7 @@ program RuneMysteries;
 procedure SetupSmart;
 begin
   Smart_Server      := 152;
-  Smart_Members     := True;
+  Smart_Members     := False;
   Smart_Signed      := True;
   Smart_SuperDetail := False;
 end;
@@ -97,6 +97,22 @@ const
   // Script
     SCRIPT_VER  = 0.01;
     MOUSE_SPEED = 11;
+  // Lumby Door Colours
+    LD_COL = 9825004;
+    LD_HUE = 0.03;
+    LD_SAT = 3.41;
+    LD_TOL = 8;
+    LD_XMOD = 6;
+    LD_YMOD = 0;
+    LD_UPT = 'oor';
+  // Duke Colours
+    DH_COL = 7027223;
+    DH_HUE = 0.08;
+    DH_SAT = 0.77;
+    DH_TOL = 16;
+    DH_XMOD = 0;
+    DH_YMOD = 0;
+    DH_UPT = 'uke';
 
 {*******************************************************************************
                             End Constants and Vars
@@ -205,6 +221,7 @@ begin
         FFlag(0);
         Result := WaitFunc(@SecondFloor, 200, 5000);
         Wait(1000 + Random(1000));
+        ClearRSCanvas(SMART_Canvas.canvas);
         Exit;
       end;
     end else
@@ -213,6 +230,7 @@ begin
       BadBoxes[high(BadBoxes)] := IntToBox(X - 16, Y - 16, X + 16, Y + 16);
     end;
   end;
+  ClearRSCanvas(SMART_Canvas.canvas);
 end;
 
 {*******************************************************************************
@@ -249,14 +267,85 @@ begin
 end;
 
 {*******************************************************************************
+function UseCTS(COL: Integer; HUE, SAT: Extended; TOL, XMOD, YMOD: Integer; UpText: String; Door: Boolean): Boolean;
+Description: Uses CTS Modifiers to find things
+*******************************************************************************}
+function UseCTS(COL: Integer; HUE, SAT: Extended; TOL, XMOD, YMOD: Integer; UpText: String; Door: Boolean): Boolean;
+var
+  TPA   : TPointArray;
+  ATPA  : T2DPointArray;
+  i, f, h, x, y, oldCTS : Integer;
+  oldHUE, oldSAT : Extended;
+begin
+  if (not (LoggedIn)) then
+    Exit;
+
+  try
+    Wait(1);
+
+  oldCTS := GetColorToleranceSpeed;
+  GetColorspeed2Modifiers(oldHUE, oldSAT);
+
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(HUE, SAT);
+
+  if (FindColorsSpiralTolerance(x, y, TPA, COL, MSX1, MSY1, MSX2, MSY2, TOL)) then
+  begin
+    ATPA := SplitTPAEx(TPA, 5, 5);
+    if Length(ATPA) = 0 then
+    begin
+      Writeln('ATPA in proc UseCTS empty');
+      Exit;
+    end;
+    SortATPAFromFirstPoint(ATPA, Point(MSCX, MSCY));
+    h := High(ATPA);
+    for i := 0 to h do
+    begin
+      MiddleTPAEx(ATPA[i], x, y);
+      MMouse(x + XMOD, y + YMOD, 2, 2);
+      if WaitUpText(UpText, RandomRange(250, 350)) then
+      begin
+        if Door then
+        begin
+          if IsUpText('pen') then
+          begin
+            Mouse(x, y, 0, 0, False);
+            WaitOption('pen', RandomRange(400, 800));
+           // Wait(400 + RandomRange(400, 800));
+            Result := True;
+            Exit;
+          end else
+          if IsUpText('lose') then
+          begin
+            Result := True;
+            Exit;
+          end;
+        end else
+        begin
+          Mouse(x, y, 0, 0, True);
+          Wait(400 + RandomRange(400, 800));
+          Result := True;
+          Exit;
+        end;
+      end;
+    end;
+  end;
+  finally
+    // Restore previous CTS + Modifiers
+    SetColorSpeed2Modifiers(oldHUE, oldSAT);
+    ColorToleranceSpeed(oldCTS);
+  end;
+end;
+
+{*******************************************************************************
 procedure ScriptTerminate;
 Description: Last things to execute when script has finished or terminated.
 *******************************************************************************}
 procedure ScriptTerminate;
 begin
   // Progress Report
-  if LoggedIn then
-    LogOut;
+  //if LoggedIn then
+    //LogOut;
 end;
 
 {*******************************************************************************
@@ -286,10 +375,10 @@ var
   BreakMark: Integer;
 begin
   SetupRS(True);
-  MarkTime(BreakMark);
+  //MarkTime(BreakMark);
   // Do Shit
 
-  Cast('lumbridge home teleport', False);
+  {Cast('lumbridge home teleport', False);
   Wait(15000 + Random(4000));
   Writeln('In Lumbridge');
   SetAngle(True);
@@ -303,11 +392,14 @@ begin
       if (WalkTo(758, 5, 2, 2, Point(632, 113))) then
       begin
         Writeln('Arrived at door');
-        Writeln('Door finding here');
+        OpenLumbyDoor;
+        TerminateScript;
       end;
     end;
-  end;
-
+  end;   }
+   if UseCTS(LD_COL, LD_HUE, LD_SAT, LD_TOL, LD_XMOD, LD_YMOD, LD_UPT, True) then
+     if UseCTS(DH_COL, DH_HUE, DH_SAT, DH_TOL, DH_XMOD, DH_YMOD, DH_UPT, False) then   //Duke needs improving
+      TerminateScript;
 end;
 
 begin
