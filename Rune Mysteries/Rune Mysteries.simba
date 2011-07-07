@@ -1,10 +1,10 @@
 {==============================================================================]
-|                                    Title                                     |
-|                                  Subtitle!                                   |
-|                                Version: 0.00                                 |
-|                                   Author                                     |
+|                               SRL Quest Runner                               |
+|                                Rune Mysteries                                |
+|                                Version: 0.01                                 |
+|                               r!ch!e & Camaro                                |
 [==============================================================================]
-| Description:                                                                 |
+| Description: Completes Rune Mysteries Quest                                  |
 |                                                                              |
 [==============================================================================]
 | Setup:                                                                       |
@@ -40,7 +40,7 @@
 program RuneMysteries;
 {$DEFINE SMART} // Comment line if not using SMART
 {$I SRL/SRL.scar}
-{$i srl/srl/misc/paintsmart.scar}
+{$I SRL/SRL/Misc/PaintSMART.scar}
 {$I SRL/SRL/Skill/Magic.scar}
 
 {******************************************************************************)
@@ -89,51 +89,27 @@ end;
                                   End Setup
 *******************************************************************************}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 {*******************************************************************************
                               Constants and Vars
 *******************************************************************************}
 
 const
   // Script
-    SCRIPT_VER  = 0.00;
+    SCRIPT_VER  = 0.01;
     MOUSE_SPEED = 11;
 
 {*******************************************************************************
                             End Constants and Vars
 *******************************************************************************}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 {*******************************************************************************
                                    Script
 *******************************************************************************}
 
+{*******************************************************************************
+function PlayerIdle: Boolean;
+Description: Returns True if player is idle
+*******************************************************************************}
 function PlayerIdle: Boolean;
 var
   MinPixelShift, MaxPixelShift, Interval, MaxTime, WaitTime, AVG: Integer;
@@ -155,6 +131,10 @@ begin
     Writeln('Player animation: Idle');
 end;
 
+{*******************************************************************************
+function SecondFloor : Boolean;
+Description: Returns True if on the second floor
+*******************************************************************************}
 function SecondFloor : Boolean;
 var
   x, y: Integer;
@@ -163,6 +143,10 @@ begin
   Result := (not(FindSymbol(X, Y, 'water')));
 end;
 
+{*******************************************************************************
+function UpLumbridgeStairs: Boolean;
+Description: Returns True if stairs are successfully climbed
+*******************************************************************************}
 function UpLumbridgeStairs: Boolean;
 var
   X, Y, I, C , F, n: Integer;
@@ -231,6 +215,10 @@ begin
   end;
 end;
 
+{*******************************************************************************
+function WalkTo(Color, Tolerance, RX, RY: Integer; SortFrom: TPoint ): Boolean;
+Description: Walks places
+*******************************************************************************}
 function WalkTo(Color, Tolerance, RX, RY: Integer; SortFrom: TPoint ): Boolean;
 var
   i, x, y: Integer;
@@ -261,26 +249,46 @@ begin
 end;
 
 {*******************************************************************************
+procedure ScriptTerminate;
+Description: Last things to execute when script has finished or terminated.
+*******************************************************************************}
+procedure ScriptTerminate;
+begin
+  // Progress Report
+  if LoggedIn then
+    LogOut;
+end;
+
+{*******************************************************************************
+procedure SetupRS;
+Description: Configures RS for Current Player.
+*******************************************************************************}
+procedure SetupRS(First: Boolean);
+begin
+  if not LoggedIn then
+    LoginPlayer;
+  Wait(1500 + Random(30));
+  SetAngle(True);
+  MakeCompass('N');
+  SortBook(BookSort_Teleport);
+end;
+
+{*******************************************************************************
                                   End Script
 *******************************************************************************}
 
-
-
-
-
-
-
-
-
-
-
-
+{*******************************************************************************
+procedure MainLoop;
+Description: The Main Loop :)
+*******************************************************************************}
+procedure MainLoop;
+var
+  BreakMark: Integer;
 begin
-  SetupSmart;
-  SetupSRL;
-  DeclarePlayers;
-  SetupSpells;
-  SortBook(BookSort_Teleport);
+  SetupRS(True);
+  MarkTime(BreakMark);
+  // Do Shit
+
   Cast('lumbridge home teleport', False);
   Wait(15000 + Random(4000));
   Writeln('In Lumbridge');
@@ -292,11 +300,24 @@ begin
     if UpLumbridgeStairs then
     begin
       Writeln('Arrived at the second floor');
-      if (WalkTo(758, 5, 2, 2, Point(632, 113)) then
+      if (WalkTo(758, 5, 2, 2, Point(632, 113))) then
       begin
         Writeln('Arrived at door');
         Writeln('Door finding here');
       end;
     end;
   end;
+
+end;
+
+begin
+  AddOnTerminate('ScriptTerminate');
+  SetupSmart;
+  SetupSRL;
+  MouseSpeed := MOUSE_SPEED;
+  DeclarePlayers;
+  SetupSpells;
+  repeat
+    MainLoop;
+  until(AllPlayersInActive);
 end.
