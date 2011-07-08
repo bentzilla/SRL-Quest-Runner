@@ -289,7 +289,7 @@ function UseCTS(COL: Integer; HUE, SAT: Extended; Width, Height, TOL, XMOD, YMOD
 var
   TPA   : TPointArray;
   ATPA  : T2DPointArray;
-  i, f, h, x, y, oldCTS : Integer;
+  i, h, x, y, oldCTS : Integer;
   oldHUE, oldSAT : Extended;
   TB: TBox;
 begin
@@ -348,7 +348,7 @@ function FindDoor: Boolean;
 var
   TPA   : TPointArray;
   ATPA  : T2DPointArray;
-  i, f, h, x, y, oldCTS : Integer;
+  i, h, x, y, oldCTS : Integer;
   oldHUE, oldSAT : Extended;
   TB : TBox;
 begin
@@ -449,32 +449,36 @@ Description: The Main Loop :)
 *******************************************************************************}
 procedure MainLoop;
 var
-  BreakMark, T: Integer;
+  T, x, y: Integer;
+  o: Extended;
 begin
   SetupRS(True);
-  //MarkTime(BreakMark);
-  // Do Shit
 
-  //Cast('lumbridge home teleport', False);
-  //Wait(15000 + Random(4000));
+  Cast('lumbridge home teleport', False);
+  Wait(15000 + Random(4000));
   Writeln('In Lumbridge');
   SetAngle(True);
   Writeln('Fixed the compass angle');
-  //if WalkTo(9145483, 19, 0, 0, Point(569, 52)) then
+  if WalkTo(9145483, 19, 0, 0, Point(569, 52)) then
   begin
     Writeln('Walked to the stair case');
-    //if (UpLumbridgeStairs(LS_COL, LS_TOL, LS_ATPA_WIDTH, LS_WIDTH, LS_HEIGHT, LS_XMOD, LS_YMOD, LS_UPTEXT, LS_OPTION)) then
+    if (UpLumbridgeStairs(LS_COL, LS_TOL, LS_ATPA_WIDTH, LS_WIDTH, LS_HEIGHT, LS_XMOD, LS_YMOD, LS_UPTEXT, LS_OPTION)) then
     begin
       Wait(1500 + Random(1500));
       Writeln('Arrived at the second floor');
-      //if (WalkTo(2026, 14, 2, 2, Point(636, 109))) then
+      if (WalkTo(329199, 7, 0, 0, Point(638, 111))) then
       begin
         Writeln('Arrived at door');
-        if (not(WaitFunc(@FindDoor, 100, 20000))) then
+        if ((CountColorTolerance(5598335, MSCX + 7, MSCY - 40, MSCX + 29, MSCY + 7, 24) > 200)) then
         begin
-          writeln('failed door finding');
-          Terminatescript;
-        end;
+          Writeln('Door Closed');
+          if (not(WaitFunc(@FindDoor, 100, 20000))) then
+          begin
+            writeln('Failed door finding');
+            Terminatescript;
+          end;
+        end else
+          Writeln('Door Open');
         Wait(2500 + Random(2000));
         for T := 0 to 4 do
         begin
@@ -485,10 +489,19 @@ begin
             MakeCompass(Random(360));
           if (T > 3) then
           begin
-           writeln('failed duke finding');
+           writeln('Failed Duke finding');
            terminatescript;
           end;
           Wait(700 + Random(400));
+        end;
+      end else
+      begin  // Start of a failsafe
+        o := SymbolAccuracy;
+        SymbolAccuracy := 0.60;
+        if FindSymbol(x, y, 'quest') then
+        begin
+          SymbolAccuracy := o;
+          Mouse(x, y, 5, 5, True);
         end;
       end;
     end;
@@ -503,7 +516,7 @@ begin
   MouseSpeed := MOUSE_SPEED;
   DeclarePlayers;
   SetupSpells;
-  repeat
+  //repeat
     MainLoop;
-  until(AllPlayersInActive);
+  //until(AllPlayersInActive);
 end.
