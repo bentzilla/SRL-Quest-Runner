@@ -97,22 +97,37 @@ const
   // Script
     SCRIPT_VER  = 0.01;
     MOUSE_SPEED = 11;
+
+  // Lumby Stair Info
+    LS_COL          = 4871776;
+    LS_TOL          = 15;
+    LS_ATPA_WIDTH   = 7;
+    LS_WIDTH        = 6;
+    LS_HEIGHT       = 6;
+    LS_UPTEXT       = 'tair';
+    LS_OPTION       = 'limb-up';
+    LS_XMOD         = -7;
+    LS_YMOD         = -7;
   // Lumby Door Colours
-    LD_COL = 9825004;
-    LD_HUE = 0.03;
-    LD_SAT = 3.41;
-    LD_TOL = 8;
-    LD_XMOD = 6;
-    LD_YMOD = 0;
-    LD_UPT = 'oor';
+    LD_COL          = 9825004;
+    LD_HUE          = 0.03;
+    LD_SAT          = 3.41;
+    LD_TOL          = 8;
+    LD_W            = 5;
+    LD_H            = 6;
+    LD_XMOD         = 6;
+    LD_YMOD         = 0;
+    LD_UPT          = 'oor';
   // Duke Colours
-    DH_COL = 7027223;
-    DH_HUE = 0.08;
-    DH_SAT = 0.77;
-    DH_TOL = 16;
-    DH_XMOD = 0;
-    DH_YMOD = 0;
-    DH_UPT = 'uke';
+    DH_COL          = 1121830 ;
+    DH_HUE          = 0.00;
+    DH_SAT          = 0.00;
+    DH_TOL          = 13;
+    DH_W            = 5;
+    DH_H            = 8;
+    DH_XMOD         = 0;
+    DH_YMOD         = 0;
+    DH_UPT          = 'uke';
 
 {*******************************************************************************
                             End Constants and Vars
@@ -163,7 +178,7 @@ end;
 function UpLumbridgeStairs: Boolean;
 Description: Returns True if stairs are successfully climbed
 *******************************************************************************}
-function UpLumbridgeStairs: Boolean;
+function UpLumbridgeStairs(Color, Tolerance, ATPAWidth, W, H, XMOD, YMOD : Integer; UpText, Option: String)  : Boolean;
 var
   X, Y, I, C , F, n: Integer;
   TPA : TPointArray;
@@ -172,14 +187,14 @@ var
   BadBoxes: TBoxArray;
 
 begin
-  FindColorsTolerance(TPA, 4871776, MSCX - 140, MSCY - 140, MSCX - 10, MSCY - 10, 15);
+  FindColorsTolerance(TPA, Color, MSCX - 140, MSCY - 140, MSCX - 10, MSCY - 10, Tolerance);
   if (Length(TPA) < 1) then
   begin
     Writeln('No stairs');
     Exit;
   end;
   SortTPAFrom(TPA, Point(MSCX, MSCY));
-  ATPA := TPAToATPA(TPA, 7);
+  ATPA := TPAToATPA(TPA, ATPAWidth);
   SortATPAFrom(ATPA, Point(MSCX, MSCY));
   C := High(ATPA);
   drawDotsMulti(true, ATPA);
@@ -187,7 +202,7 @@ begin
   begin
     TB := GetTPABounds(ATPA[I]);
 
-    if (TB.X2 - TB.X1 <= 6) and (TB.Y2 - TB.Y1 <= 6) then
+    if (TB.X2 - TB.X1 <= W) and (TB.Y2 - TB.Y1 <= H) then
       Continue;
 
     MiddleTPAEx(ATPA[i], X, Y);
@@ -211,12 +226,12 @@ begin
       Continue;
     if (Y > MSCY) then
       Continue;
-    MMouse(X - 7, Y - 7, 4, 4);
-    if (WaitUpText('tair', 200)) then
+    MMouse(X + XMOD, Y + YMOD, 4, 4);
+    if (WaitUpText(UpText, 200)) then
     begin
       GetMousePos(X, Y);
       Mouse(X, Y, 0, 0, False);
-      if (WaitOption('limb-up', 500)) then
+      if (WaitOption(Option, 500)) then
       begin
         FFlag(0);
         Result := WaitFunc(@SecondFloor, 200, 5000);
@@ -267,15 +282,16 @@ begin
 end;
 
 {*******************************************************************************
-function UseCTS(COL: Integer; HUE, SAT: Extended; TOL, XMOD, YMOD: Integer; UpText: String; Door: Boolean): Boolean;
+function UseCTS(COL: Integer; HUE, SAT: Extended; TOL, XMOD, YMOD: Integer; UpText: String;): Boolean;
 Description: Uses CTS Modifiers to find things
 *******************************************************************************}
-function UseCTS(COL: Integer; HUE, SAT: Extended; TOL, XMOD, YMOD: Integer; UpText: String; Door: Boolean): Boolean;
+function UseCTS(COL: Integer; HUE, SAT: Extended; Width, Height, TOL, XMOD, YMOD: Integer; UpText: String): Boolean;
 var
   TPA   : TPointArray;
   ATPA  : T2DPointArray;
   i, f, h, x, y, oldCTS : Integer;
   oldHUE, oldSAT : Extended;
+  TB: TBox;
 begin
   if (not (LoggedIn)) then
     Exit;
@@ -291,7 +307,66 @@ begin
 
   if (FindColorsSpiralTolerance(x, y, TPA, COL, MSX1, MSY1, MSX2, MSY2, TOL)) then
   begin
-    ATPA := SplitTPAEx(TPA, 5, 5);
+    ATPA := SplitTPAEx(TPA, Width, Height);
+    if Length(ATPA) = 0 then
+    begin
+      Writeln('ATPA in proc UseCTS empty');
+      Exit;
+    end;
+    Writeln('Sorting useCTS');
+    SortATPAFromFirstPoint(ATPA, Point(MSCX, MSCY));
+    h := High(ATPA);
+    for i := 0 to h do
+    begin
+      TB := GetTPABounds(ATPA[I]);
+      if (TB.X2 - TB.X1 <= Width) and (TB.Y2 - TB.Y1 <= Height) then
+      begin
+        MiddleTPAEx(ATPA[i], x, y);
+        MMouse(x + XMOD, y + YMOD, 2, 2);
+        if WaitUpText(UpText, RandomRange(250, 350)) then
+        begin
+          Mouse(x, y, 0, 0, True);
+          Wait(400 + RandomRange(400, 800));
+          Result := True;
+          Exit;
+        end;
+      end;
+    end;
+  end;
+  finally
+    // Restore previous CTS + Modifiers
+    SetColorSpeed2Modifiers(oldHUE, oldSAT);
+    ColorToleranceSpeed(oldCTS);
+  end;
+end;
+
+{*******************************************************************************
+function FindDoor(COL: Integer; HUE, SAT: Extended; TOL, XMOD, YMOD: Integer; UpText: String;): Boolean;
+Description: Opens door
+*******************************************************************************}
+function FindDoor: Boolean;
+var
+  TPA   : TPointArray;
+  ATPA  : T2DPointArray;
+  i, f, h, x, y, oldCTS : Integer;
+  oldHUE, oldSAT : Extended;
+  TB : TBox;
+begin
+  if (not (LoggedIn)) then
+    Exit;
+
+  try
+    Wait(1);
+
+  oldCTS := GetColorToleranceSpeed;
+  GetColorspeed2Modifiers(oldHUE, oldSAT);
+
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(LD_HUE, LD_SAT);
+
+  if (FindColorsSpiralTolerance(x, y, TPA, LD_COL, MSX1, MSY1, MSX2, MSY2, LD_TOL)) then
+  begin
+    ATPA := SplitTPAEx(TPA, LD_W, LD_H);
     if Length(ATPA) = 0 then
     begin
       Writeln('ATPA in proc UseCTS empty');
@@ -301,31 +376,33 @@ begin
     h := High(ATPA);
     for i := 0 to h do
     begin
-      MiddleTPAEx(ATPA[i], x, y);
-      MMouse(x + XMOD, y + YMOD, 2, 2);
-      if WaitUpText(UpText, RandomRange(250, 350)) then
+      TB := GetTPABounds(ATPA[I]);
+      if (TB.X2 - TB.X1 <= LD_H) and (TB.Y2 - TB.Y1 <= LD_H) then
       begin
-        if Door then
+        MiddleTPAEx(ATPA[i], x, y);
+        MMouse(x + LD_XMOD, y + LD_YMOD, 2, 2);
+        Wait(80 + Random(40));
+        if WaitUpText(LD_UPT, RandomRange(250, 350)) then
         begin
           if IsUpText('pen') then
           begin
+            Writeln('Opening door');
+            GetMousePos(X, Y);
             Mouse(x, y, 0, 0, False);
             WaitOption('pen', RandomRange(400, 800));
-           // Wait(400 + RandomRange(400, 800));
             Result := True;
+            SetColorSpeed2Modifiers(oldHUE, oldSAT);
+            ColorToleranceSpeed(oldCTS);
             Exit;
           end else
           if IsUpText('lose') then
           begin
             Result := True;
+            Writeln('Door is open');
+            SetColorSpeed2Modifiers(oldHUE, oldSAT);
+            ColorToleranceSpeed(oldCTS);
             Exit;
           end;
-        end else
-        begin
-          Mouse(x, y, 0, 0, True);
-          Wait(400 + RandomRange(400, 800));
-          Result := True;
-          Exit;
         end;
       end;
     end;
@@ -372,34 +449,51 @@ Description: The Main Loop :)
 *******************************************************************************}
 procedure MainLoop;
 var
-  BreakMark: Integer;
+  BreakMark, T: Integer;
 begin
   SetupRS(True);
   //MarkTime(BreakMark);
   // Do Shit
 
-  {Cast('lumbridge home teleport', False);
-  Wait(15000 + Random(4000));
+  //Cast('lumbridge home teleport', False);
+  //Wait(15000 + Random(4000));
   Writeln('In Lumbridge');
   SetAngle(True);
   Writeln('Fixed the compass angle');
-  if WalkTo(9145483, 19, 0, 0, Point(569, 52)) then
+  //if WalkTo(9145483, 19, 0, 0, Point(569, 52)) then
   begin
     Writeln('Walked to the stair case');
-    if UpLumbridgeStairs then
+    //if (UpLumbridgeStairs(LS_COL, LS_TOL, LS_ATPA_WIDTH, LS_WIDTH, LS_HEIGHT, LS_XMOD, LS_YMOD, LS_UPTEXT, LS_OPTION)) then
     begin
+      Wait(1500 + Random(1500));
       Writeln('Arrived at the second floor');
-      if (WalkTo(758, 5, 2, 2, Point(632, 113))) then
+      //if (WalkTo(2026, 14, 2, 2, Point(636, 109))) then
       begin
         Writeln('Arrived at door');
-        OpenLumbyDoor;
-        TerminateScript;
+        if (not(WaitFunc(@FindDoor, 100, 20000))) then
+        begin
+          writeln('failed door finding');
+          Terminatescript;
+        end;
+        Wait(2500 + Random(2000));
+        for T := 0 to 4 do
+        begin
+          if (UseCTS(DH_COL, DH_HUE, DH_SAT, DH_W, DH_H, DH_TOL + (T * 2), DH_XMOD, DH_YMOD, DH_UPT)) then
+            Break;
+
+          if (random(2) = 1) then
+            MakeCompass(Random(360));
+          if (T > 3) then
+          begin
+           writeln('failed duke finding');
+           terminatescript;
+          end;
+          Wait(700 + Random(400));
+        end;
       end;
     end;
-  end;   }
-   if UseCTS(LD_COL, LD_HUE, LD_SAT, LD_TOL, LD_XMOD, LD_YMOD, LD_UPT, True) then
-     if UseCTS(DH_COL, DH_HUE, DH_SAT, DH_TOL, DH_XMOD, DH_YMOD, DH_UPT, False) then   //Duke needs improving
-      TerminateScript;
+  end;
+  TerminateScript;
 end;
 
 begin
