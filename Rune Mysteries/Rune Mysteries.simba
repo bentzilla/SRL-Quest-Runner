@@ -63,6 +63,16 @@ begin
 
   with Players[0] do
   begin
+    Name        := 'qyzkkbud@lol.com';
+    Pass        := 'scripttest';
+    Nick        := 'ivor';
+    BoxRewards  := ['Lamp', 'Coins'];           // Box Reward
+    LampSkill   := 'Prayer';                    // Skill to advance with Lamp Reward
+    Active      := True;                        // Active ?
+  end;
+
+{  with Players[0] do
+  begin
     Name        := 'Username';
     Pass        := 'Password';
     Nick        := '3 - 4 Letters of Username';
@@ -70,7 +80,7 @@ begin
     LampSkill   := 'Prayer';                    // Skill to advance with Lamp Reward
     Active      := True;                        // Active ?
   end;
-
+}
   {
   with Players[1] do
   begin
@@ -252,9 +262,9 @@ end;
 function WalkTo(Color, Tolerance, RX, RY: Integer; SortFrom: TPoint ): Boolean;
 Description: Walks places
 *******************************************************************************}
-function WalkTo(Color, Tolerance, RX, RY: Integer; SortFrom: TPoint ): Boolean;
+function WalkTo(Color, Tolerance, RX, RY: Integer; SortFrom: TPoint; Bad: TBox): Boolean;
 var
-  i, x, y: Integer;
+  i: Integer;
   TPA: TPointArray;
 begin
   if not LoggedIn then Exit;
@@ -267,13 +277,14 @@ begin
 
   for i := 0 to High(TPA) do
   begin
-    x := TPA[i].x;
-    y := TPA[i].y;
 
-    if (not rs_OnMinimap(x + rx, y + ry)) then
+    if (not rs_OnMinimap(TPA[i].x + rx, TPA[i].y + ry)) then
       Continue;
 
-    Mouse(x + rx, y + ry, 0, 0, True);
+    if PointInBox(TPA[i], Bad) then
+      Continue;
+
+    Mouse(TPA[i].x + rx, TPA[i].y + ry, 0, 0, True);
     FFlag(6);
     Wait(1400 + Random(1400));
     Result := True;
@@ -437,6 +448,7 @@ begin
   SetAngle(True);
   MakeCompass('N');
   SortBook(BookSort_Teleport);
+  SetRun(True);
 end;
 
 {*******************************************************************************
@@ -449,8 +461,9 @@ Description: The Main Loop :)
 *******************************************************************************}
 procedure MainLoop;
 var
-  T, x, y: Integer;
+  T, x, y, i: Integer;
   o: Extended;
+  Box: TBox;
 begin
   SetupRS(True);
 
@@ -459,14 +472,14 @@ begin
   Writeln('In Lumbridge');
   SetAngle(True);
   Writeln('Fixed the compass angle');
-  if WalkTo(9145483, 19, 0, 0, Point(569, 52)) then
+  if WalkTo(9145483, 19, 0, 0, Point(569, 52), Box) then
   begin
     Writeln('Walked to the stair case');
     if (UpLumbridgeStairs(LS_COL, LS_TOL, LS_ATPA_WIDTH, LS_WIDTH, LS_HEIGHT, LS_XMOD, LS_YMOD, LS_UPTEXT, LS_OPTION)) then
     begin
       Wait(1500 + Random(1500));
       Writeln('Arrived at the second floor');
-      if (WalkTo(329199, 7, 0, 0, Point(638, 111))) then
+      if (WalkTo(263406, 9, 0, 0, Point(638, 111), PointToBox(Point(633, 86), Point(639, 92)))) then
       begin
         Writeln('Arrived at door');
         if ((CountColorTolerance(5598335, MSCX + 7, MSCY - 40, MSCX + 29, MSCY + 7, 24) > 200)) then
@@ -485,17 +498,18 @@ begin
           if (UseCTS(DH_COL, DH_HUE, DH_SAT, DH_W, DH_H, DH_TOL + (T * 2), DH_XMOD, DH_YMOD, DH_UPT)) then
             Break;
 
-          if (random(2) = 1) then
-            MakeCompass(Random(360));
+         // if (random(2) = 1) then
+           // MakeCompass(Random(360));
           if (T > 3) then
           begin
-           writeln('Failed Duke finding');
-           terminatescript;
+           Writeln('Failed Duke finding');
+           TerminateScript;
           end;
           Wait(700 + Random(400));
         end;
       end else
       begin  // Start of a failsafe
+        Writeln('FailSafe');
         o := SymbolAccuracy;
         SymbolAccuracy := 0.60;
         if FindSymbol(x, y, 'quest') then
@@ -503,9 +517,35 @@ begin
           SymbolAccuracy := o;
           Mouse(x, y, 5, 5, True);
         end;
+        TerminateScript;
+        // put duke finding in own func so its easier to put here
       end;
     end;
   end;
+
+  while not ClickToContinue do
+    Wait(RandomRange(500, 1500));
+
+  Wait(RandomRange(500, 1500));
+  MouseBox(159, 400, 358, 407, 1);
+  Wait(RandomRange(500, 1500));
+
+  for i := 1 to 4 do
+    while not ClickToContinue do
+      Wait(RandomRange(500, 1500));
+  Wait(RandomRange(500, 1500));
+
+  MouseBox(129, 294, 214, 310, 1);
+  Wait(RandomRange(500, 1500));
+
+  for i := 1 to 4 do
+    while not ClickToContinue do
+      Wait(RandomRange(500, 1500));
+  Wait(RandomRange(500, 1500));
+
+  Cast('lumbridge home teleport', False);
+
+  //Walk To Wizard Tower
   TerminateScript;
 end;
 
