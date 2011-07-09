@@ -129,10 +129,10 @@ const
     LD_YMOD         = 0;
     LD_UPT          = 'oor';
   // Duke Colours
-    DH_COL          = 1121830 ;
-    DH_HUE          = 0.00;
-    DH_SAT          = 0.00;
-    DH_TOL          = 20;
+    DH_COL          = 1650489 ;
+    DH_HUE          = 0.17;
+    DH_SAT          = 0.28;
+    DH_TOL          = 5;
     DH_W            = 5;
     DH_H            = 8;
     DH_XMOD         = 0;
@@ -543,30 +543,16 @@ end;
                              End Commented Code
 *******************************************************************************}
 
-
-
-
 {*******************************************************************************
-procedure MainLoop;
-Description: The Main Loop :)
+function StartQuest: Boolean;
+Description: Lets start, k?
 *******************************************************************************}
-procedure MainLoop;
+function StartQuest: Boolean;
 var
   T, cx, cy: Integer;
   TPA : TPointArray;
   Box: TBox;
-
-  label StartQuest;
-  label WalkToTower;
 begin
-  SetupRS(True);
-
-  goto StartQuest;
-
-
-  StartQuest:
-
-
   Cast('lumbridge home teleport', False);
   Wait(15000 + Random(4000));
   Writeln('In Lumbridge');
@@ -579,33 +565,42 @@ begin
     begin
       Wait(1500 + Random(1500));
       Writeln('Arrived at the second floor');
+      // Maybe we should constant this info
       if (WalkTo(263406, 9, 0, 0, Point(638, 111), PointToBox(Point(633, 86), Point(639, 92)))) then
       begin
         Writeln('Arrived at door');
         if (not(WaitFunc(@FindDoor, 100, 20000))) then
         begin
           Writeln('Failed door finding');
-          Terminatescript;
+          Exit;
         end;
         Wait(2500 + Random(2000));
         if (TalkToDuke) then
-        begin  // Start of a failsafe
+        begin
           ChatWithDuke;
-          goto WalkToTower;
-          //Cast('lumbridge home teleport', False);
-          //Wait(15000 + Random(4000));
+          Result := True;
+          Cast('lumbridge home teleport', False);
+          Wait(15000 + Random(4000));
+          Exit;
         end;
       end;
     end;
   end;
+end;
 
 
+{*******************************************************************************
+procedure MainLoop;
+Description: The Main Loop :)
+*******************************************************************************}
+procedure MainLoop;
+begin
+  SetupRS(True);
 
-  WalkToTower:
+  StartQuest;
+  WalkToTower;
 
-  //Cast('lumbridge home teleport', False);
-  //Wait(15000 + Random(4000));
-  SetAngle(true);
+  SetAngle(True);
   Writeln('Walking to tower');
   //TerminateScript;
 end;
@@ -617,6 +612,7 @@ begin
   MouseSpeed := MOUSE_SPEED;
   DeclarePlayers;
   SetupSpells;
+
   //repeat
     MainLoop;
   //until(AllPlayersInActive);
