@@ -64,7 +64,7 @@ begin
   with Players[0] do
   begin
     Name        := 'qyzkkbud@lol.com';
-    Pass        := 'scripttest';
+    Pass        := '';             //Dont need
     Nick        := 'ivor';
     BoxRewards  := ['Lamp', 'Coins'];           // Box Reward
     LampSkill   := 'Prayer';                    // Skill to advance with Lamp Reward
@@ -132,7 +132,7 @@ const
     DH_COL          = 1121830 ;
     DH_HUE          = 0.00;
     DH_SAT          = 0.00;
-    DH_TOL          = 13;
+    DH_TOL          = 20;
     DH_W            = 5;
     DH_H            = 8;
     DH_XMOD         = 0;
@@ -426,6 +426,72 @@ begin
 end;
 
 {*******************************************************************************
+function FindDuke : Boolean;
+Description: Finds the duke.
+*******************************************************************************}
+function FindDuke : Boolean;
+begin
+  Result := (UseCTS(DH_COL, DH_HUE, DH_SAT, DH_W, DH_H, DH_TOL, DH_XMOD, DH_YMOD, DH_UPT));
+end;
+
+{*******************************************************************************
+function TalkToDuke : Boolean;
+Description: Starts the interacting with the duke.
+*******************************************************************************}
+function TalkToDuke : Boolean;
+var
+  X, Y: Integer;
+  o: Extended;
+begin
+  if (not(WaitFunc(@FindDuke, 100, 20000))) then //If you dont find the duke in 20 seconds
+  begin
+    Writeln('Failed finding the duke');
+    Writeln('FailSafe');
+    o := SymbolAccuracy;
+    SymbolAccuracy := 0.60;
+    if FindSymbol(x, y, 'quest') then
+    begin
+      SymbolAccuracy := o;
+      Mouse(x, y, 5, 5, True);
+    end;
+    if (not(WaitFunc(@FindDuke, 100, 10000))) then //then call it quits if you dont find it again.
+    begin
+      Writeln('Failed finding the duke(2)');
+      TerminateScript;
+    end;
+  end;
+end;
+
+{*******************************************************************************
+function ChatWithDuke : Boolean;
+Description: Chats with him.
+*******************************************************************************}
+procedure ChatWithDuke;
+var
+  i : Integer;
+begin
+  while not ClickToContinue do
+    Wait(RandomRange(500, 1500));
+
+  Wait(RandomRange(500, 1500));
+  MouseBox(159, 400, 358, 407, 1);
+  Wait(RandomRange(500, 1500));
+
+  for i := 1 to 4 do
+    while not ClickToContinue do
+      Wait(RandomRange(500, 1500));
+  Wait(RandomRange(500, 1500));
+
+  MouseBox(129, 294, 214, 310, 1);
+  Wait(RandomRange(500, 1500));
+
+  for i := 1 to 4 do
+    while not ClickToContinue do
+      Wait(RandomRange(500, 1500));
+  Wait(RandomRange(500, 1500));
+end;
+
+{*******************************************************************************
 procedure ScriptTerminate;
 Description: Last things to execute when script has finished or terminated.
 *******************************************************************************}
@@ -455,17 +521,51 @@ end;
                                   End Script
 *******************************************************************************}
 
+
+
+
+{*******************************************************************************
+                              Commented Code
+*******************************************************************************}
+        {if ((CountColorTolerance(5598335, MSCX + 7, MSCY - 40, MSCX + 29, MSCY + 7, 24) > 200)) then
+        begin
+          Writeln('Door Closed');
+          if (not(WaitFunc(@FindDoor, 100, 20000))) then
+          begin
+            writeln('Failed door finding');
+            Terminatescript;
+          end;
+        end else
+          Writeln('Door Open');}
+
+
+{*******************************************************************************
+                             End Commented Code
+*******************************************************************************}
+
+
+
+
 {*******************************************************************************
 procedure MainLoop;
 Description: The Main Loop :)
 *******************************************************************************}
 procedure MainLoop;
 var
-  T, x, y, i: Integer;
-  o: Extended;
+  T, cx, cy: Integer;
+  TPA : TPointArray;
   Box: TBox;
+
+  label StartQuest;
+  label WalkToTower;
 begin
   SetupRS(True);
+
+  goto StartQuest;
+
+
+  StartQuest:
+
 
   Cast('lumbridge home teleport', False);
   Wait(15000 + Random(4000));
@@ -482,71 +582,32 @@ begin
       if (WalkTo(263406, 9, 0, 0, Point(638, 111), PointToBox(Point(633, 86), Point(639, 92)))) then
       begin
         Writeln('Arrived at door');
-        if ((CountColorTolerance(5598335, MSCX + 7, MSCY - 40, MSCX + 29, MSCY + 7, 24) > 200)) then
+        if (not(WaitFunc(@FindDoor, 100, 20000))) then
         begin
-          Writeln('Door Closed');
-          if (not(WaitFunc(@FindDoor, 100, 20000))) then
-          begin
-            writeln('Failed door finding');
-            Terminatescript;
-          end;
-        end else
-          Writeln('Door Open');
+          Writeln('Failed door finding');
+          Terminatescript;
+        end;
         Wait(2500 + Random(2000));
-        for T := 0 to 4 do
-        begin
-          if (UseCTS(DH_COL, DH_HUE, DH_SAT, DH_W, DH_H, DH_TOL + (T * 2), DH_XMOD, DH_YMOD, DH_UPT)) then
-            Break;
-
-         // if (random(2) = 1) then
-           // MakeCompass(Random(360));
-          if (T > 3) then
-          begin
-           Writeln('Failed Duke finding');
-           TerminateScript;
-          end;
-          Wait(700 + Random(400));
+        if (TalkToDuke) then
+        begin  // Start of a failsafe
+          ChatWithDuke;
+          goto WalkToTower;
+          //Cast('lumbridge home teleport', False);
+          //Wait(15000 + Random(4000));
         end;
-      end else
-      begin  // Start of a failsafe
-        Writeln('FailSafe');
-        o := SymbolAccuracy;
-        SymbolAccuracy := 0.60;
-        if FindSymbol(x, y, 'quest') then
-        begin
-          SymbolAccuracy := o;
-          Mouse(x, y, 5, 5, True);
-        end;
-        TerminateScript;
-        // put duke finding in own func so its easier to put here
       end;
     end;
   end;
 
-  while not ClickToContinue do
-    Wait(RandomRange(500, 1500));
 
-  Wait(RandomRange(500, 1500));
-  MouseBox(159, 400, 358, 407, 1);
-  Wait(RandomRange(500, 1500));
 
-  for i := 1 to 4 do
-    while not ClickToContinue do
-      Wait(RandomRange(500, 1500));
-  Wait(RandomRange(500, 1500));
+  WalkToTower:
 
-  MouseBox(129, 294, 214, 310, 1);
-  Wait(RandomRange(500, 1500));
-
-  for i := 1 to 4 do
-    while not ClickToContinue do
-      Wait(RandomRange(500, 1500));
-  Wait(RandomRange(500, 1500));
-
-  Cast('lumbridge home teleport', False);
-
-  //Walk To Wizard Tower
-  TerminateScript;
+  //Cast('lumbridge home teleport', False);
+  //Wait(15000 + Random(4000));
+  SetAngle(true);
+  Writeln('Walking to tower');
+  //TerminateScript;
 end;
 
 begin
