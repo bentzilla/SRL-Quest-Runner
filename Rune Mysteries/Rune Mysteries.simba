@@ -145,6 +145,36 @@ const
     DH_XMOD         = 0;
     DH_YMOD         = 0;
     DH_UPT          = 'uke';
+  // Tower Door Colours
+    TD_COL          = 4090509;
+    TD_HUE          = 0.03;
+    TD_SAT          = 0.08;
+    TD_TOL          = 5;
+    TD_W            = 38;
+    TD_H            = 34;
+    TD_XMOD         = 0;
+    TD_YMOD         = 0;
+    TD_UPT          = 'oor';
+  // Basement Black Colours
+    BB_COL          = 789517;
+    BB_HUE          = 0.00;
+    BB_SAT          = 0.00;
+    BB_TOL          = 0;
+    BB_W            = 34;
+    BB_H            = 23;
+    BB_XMOD         = 0;
+    BB_YMOD         = 0;
+    BB_UPT          = 'der';
+  // Sedridor Colours
+    SE_COL          = 12283405;
+    SE_HUE          = 0.01;
+    SE_SAT          = 0.63;
+    SE_TOL          = 18;
+    SE_W            = 36;
+    SE_H            = 43;
+    SE_XMOD         = 0;
+    SE_YMOD         = 0;
+    SE_UPT          = 'edri';
 
 {*******************************************************************************
                             End Constants and Vars
@@ -297,7 +327,7 @@ begin
 end;
 
 {*******************************************************************************
-function UseCTS(COL: Integer; HUE, SAT: Extended; TOL, XMOD, YMOD: Integer; UpText: String;): Boolean;
+function UseCTS(COL: Integer; HUE, SAT: Extended; Width, Height, TOL, XMOD, YMOD: Integer; SortPoint: TPoint; UpText: String): Boolean;
 Description: Uses CTS Modifiers to find things
 *******************************************************************************}
 function UseCTS(COL: Integer; HUE, SAT: Extended; Width, Height, TOL, XMOD, YMOD: Integer; SortPoint: TPoint; UpText: String): Boolean;
@@ -334,6 +364,7 @@ begin
     for i := 0 to h do
     begin
       TB := GetTPABounds(ATPA[I]);
+      Writeln('Width = ' + IntToStr(TB.X2 - TB.X1) + ', Height = ' + IntToStr(TB.Y2 - TB.Y1));
       if (TB.X2 - TB.X1 <= Width) and (TB.Y2 - TB.Y1 <= Height) then
       begin
         MiddleTPAEx(ATPA[i], x, y);
@@ -358,10 +389,10 @@ begin
 end;
 
 {*******************************************************************************
-function FindDoor(COL: Integer; HUE, SAT: Extended; TOL, XMOD, YMOD: Integer; UpText: String;): Boolean;
+function _FindDoor(COL: Integer; HUE, SAT: Extended; Width, Height, TOL, XMOD, YMOD: Integer; SortPoint: TPoint; UpText: String): Boolean;
 Description: Opens door
 *******************************************************************************}
-function FindDoor: Boolean;
+function _FindDoor(COL: Integer; HUE, SAT: Extended; Width, Height, TOL, XMOD, YMOD: Integer; SortPoint: TPoint; UpText: String): Boolean;
 var
   TPA   : TPointArray;
   ATPA  : T2DPointArray;
@@ -379,27 +410,28 @@ begin
   GetColorspeed2Modifiers(oldHUE, oldSAT);
 
   ColorToleranceSpeed(2);
-  SetColorSpeed2Modifiers(LD_HUE, LD_SAT);
+  SetColorSpeed2Modifiers(HUE, SAT);
 
-  if (FindColorsSpiralTolerance(x, y, TPA, LD_COL, MSX1, MSY1, MSX2, MSY2, LD_TOL)) then
+  if (FindColorsSpiralTolerance(x, y, TPA, COL, MSX1, MSY1, MSX2, MSY2, TOL)) then
   begin
-    ATPA := SplitTPAEx(TPA, LD_W, LD_H);
+    ATPA := SplitTPAEx(TPA, Width, Height);
     if Length(ATPA) = 0 then
     begin
-      Writeln('ATPA in proc UseCTS empty');
+      Writeln('ATPA in proc FindDoor empty');
       Exit;
     end;
-    SortATPAFromFirstPoint(ATPA, Point(MSCX, MSCY));
+    SortATPAFromFirstPoint(ATPA, Point(SortPoint.x, SortPoint.y));
     h := High(ATPA);
     for i := 0 to h do
     begin
       TB := GetTPABounds(ATPA[I]);
-      if (TB.X2 - TB.X1 <= LD_H) and (TB.Y2 - TB.Y1 <= LD_H) then
+      Writeln('Width = ' + IntToStr(TB.X2 - TB.X1) + ', Height = ' + IntToStr(TB.Y2 - TB.Y1));
+      if (TB.X2 - TB.X1 <= Width) and (TB.Y2 - TB.Y1 <= Height) then
       begin
         MiddleTPAEx(ATPA[i], x, y);
-        MMouse(x + LD_XMOD, y + LD_YMOD, 2, 2);
+        MMouse(x + XMOD, y + YMOD, 2, 2);
         Wait(80 + Random(40));
-        if WaitUpText(LD_UPT, RandomRange(250, 350)) then
+        if WaitUpText(UpText, RandomRange(250, 350)) then
         begin
           if IsUpText('pen') then
           begin
@@ -408,16 +440,12 @@ begin
             Mouse(x, y, 0, 0, False);
             WaitOption('pen', RandomRange(400, 800));
             Result := True;
-            SetColorSpeed2Modifiers(oldHUE, oldSAT);
-            ColorToleranceSpeed(oldCTS);
             Exit;
           end else
           if IsUpText('lose') then
           begin
             Result := True;
             Writeln('Door is open');
-            SetColorSpeed2Modifiers(oldHUE, oldSAT);
-            ColorToleranceSpeed(oldCTS);
             Exit;
           end;
         end;
@@ -432,10 +460,28 @@ begin
 end;
 
 {*******************************************************************************
-function FindDuke : Boolean;
+function FindLumbyDoor: Boolean;
+Description: Opens door
+*******************************************************************************}
+function FindLumbyDoor: Boolean;
+begin
+  Result := (_FindDoor(LD_COL, LD_HUE, LD_SAT, LD_W, LD_H, LD_TOL, LD_XMOD, LD_YMOD, Point(MSCX, MSCY), LD_UPT));
+end;
+
+{*******************************************************************************
+function FindLumbyDoor: Boolean;
+Description: Opens door
+*******************************************************************************}
+function FindTowerDoor: Boolean;
+begin
+  Result := (_FindDoor(TD_COL, TD_HUE, TD_SAT, TD_W, TD_H, TD_TOL, TD_XMOD, TD_YMOD, Point(MSCX, MSCY), TD_UPT));
+end;
+
+{*******************************************************************************
+function FindDuke: Boolean;
 Description: Finds the duke.
 *******************************************************************************}
-function FindDuke : Boolean;
+function FindDuke: Boolean;
 begin
   Result := (UseCTS(DH_COL, DH_HUE, DH_SAT, DH_W, DH_H, DH_TOL, DH_XMOD, DH_YMOD, Point(MSX2, MSY2), DH_UPT));
 end;
@@ -600,7 +646,7 @@ begin
       if (WalkTo(263409, 12, 0, 0, Point(638, 111), PointToBox(Point(633, 86), Point(639, 92)))) then
       begin
         Writeln('Arrived at door');
-        if (not(WaitFunc(@FindDoor, 100, 20000))) then
+        if (not(WaitFunc(@FindLumbyDoor, 100, 20000))) then
         begin
           Writeln('Failed door finding');
           Exit;
@@ -633,10 +679,54 @@ begin
             Writeln('Walking to tower [Ref]');
 
             if (WalkPath(R_LoadPath(R_LTT))) then
+            begin
               Writeln('At the Tower');
+              Result := True;
+            end;
           end;
     False: Exit;
   end;
+end;
+
+{*******************************************************************************
+function CompleteTower: Boolean;
+Description: Finishes The Tower
+*******************************************************************************}
+function CompleteTower: Boolean;
+var
+  TPA: TPointArray;
+begin
+  SetAngle(True);
+  MakeCompass('n');
+  SetRun(True);
+  if (CountColorTolerance(4090509, MSCX - 60, MSCY - 60, MSCX + 60, MSCY + 60, 21) > 500) then
+  begin
+    Writeln('Door Closed');
+    if (not(WaitFunc(@FindTowerDoor, 1000, 20000))) then
+    begin
+      Writeln('Failed door finding');
+      Exit;
+    end;
+  end else
+    Writeln('Door Open');
+  Wait(2500 + Random(2000));
+
+  TPA := GetMiniMapDots('npc');
+  if Length(TPA) = 0 then
+  begin
+    Writeln('Empty TPA');
+    Exit;
+  end;
+  SortTPAFrom(TPA, Point(MMX1, MMY2));
+  Mouse(TPA[0].x, TPA[0].y, 2, 2, true);
+  Flag;
+  MakeCompass('w');
+  if UseCTS(BB_COL, BB_HUE, BB_SAT, BB_W, BB_H, BB_TOL, BB_XMOD, BB_YMOD, Point(MSCX, MSCY), BB_UPT) then
+    Writeln('In Basement');
+
+
+ // if UseCTS(SE_COL, SE_HUE, SE_SAT, SE_W, SE_H, SE_TOL, SE_XMOD, SE_YMOD, Point(MSCX, MSCY), SE_UPT) then
+   // Writeln('Found Sedridor');
 end;
 
 {*******************************************************************************
@@ -647,10 +737,11 @@ procedure MainLoop;
 begin
   SetupRS(True);
 
-  StartQuest;
+  //StartQuest;
 
-  SetAngle(True);
-  WalkToTower;
+  //SetAngle(True);
+  //WalkToTower;
+  CompleteTower;
 end;
 
 begin
