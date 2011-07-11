@@ -464,8 +464,10 @@ begin
     begin
       Writeln('Failed finding the duke(2)');
       TerminateScript;
-    end;
-  end;
+    end else
+      Result := True;
+  end else
+    Result := True;
 end;
 
 {*******************************************************************************
