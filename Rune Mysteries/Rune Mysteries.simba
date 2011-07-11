@@ -597,7 +597,7 @@ begin
       Wait(1500 + Random(1500));
       Writeln('Arrived at the second floor');
       // Maybe we should constant this info
-      if (WalkTo(263406, 9, 0, 0, Point(638, 111), PointToBox(Point(633, 86), Point(639, 92)))) then
+      if (WalkTo(263409, 12, 0, 0, Point(638, 111), PointToBox(Point(633, 86), Point(639, 92)))) then
       begin
         Writeln('Arrived at door');
         if (not(WaitFunc(@FindDoor, 100, 20000))) then
