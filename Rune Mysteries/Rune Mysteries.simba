@@ -40,12 +40,16 @@
 program RuneMysteries;
 {$DEFINE SMART} // Comment line if not using SMART
 {$I SRL/SRL.scar}
-{$I SRL/SRL/Misc/PaintSMART.scar}
+{$I Reflection/Reflection.simba}
 {$I SRL/SRL/Skill/Magic.scar}
 
 {******************************************************************************)
                                   Setup Here
 *******************************************************************************}
+
+const
+  RefWalk = True; // True: Use Reflection for walking
+                  // False: USe Colour
 
 procedure SetupSmart;
 begin
@@ -63,9 +67,9 @@ begin
 
   with Players[0] do
   begin
-    Name        := 'qyzkkbud@lol.com';
-    Pass        := '';             //Dont need
-    Nick        := 'ivor';
+    Name        := 'b6a7gue14demex@btyahoo.com';
+    Pass        := 'scripttest';
+    Nick        := 'iki';
     BoxRewards  := ['Lamp', 'Coins'];           // Box Reward
     LampSkill   := 'Prayer';                    // Skill to advance with Lamp Reward
     Active      := True;                        // Active ?
@@ -107,6 +111,9 @@ const
   // Script
     SCRIPT_VER  = 0.01;
     MOUSE_SPEED = 11;
+  // Ref
+    R_LTT = 0; // Lumbridge to Tower
+    R_LTV = 1; // Lumbridge to Varrock
 
   // Lumby Stair Info
     LS_COL          = 4871776;
@@ -207,7 +214,6 @@ begin
   ATPA := TPAToATPA(TPA, ATPAWidth);
   SortATPAFrom(ATPA, Point(MSCX, MSCY));
   C := High(ATPA);
-  drawDotsMulti(true, ATPA);
   for I := 0 to C do
   begin
     TB := GetTPABounds(ATPA[I]);
@@ -246,7 +252,6 @@ begin
         FFlag(0);
         Result := WaitFunc(@SecondFloor, 200, 5000);
         Wait(1000 + Random(1000));
-        ClearRSCanvas(SMART_Canvas.canvas);
         Exit;
       end;
     end else
@@ -255,7 +260,6 @@ begin
       BadBoxes[high(BadBoxes)] := IntToBox(X - 16, Y - 16, X + 16, Y + 16);
     end;
   end;
-  ClearRSCanvas(SMART_Canvas.canvas);
 end;
 
 {*******************************************************************************
@@ -296,7 +300,7 @@ end;
 function UseCTS(COL: Integer; HUE, SAT: Extended; TOL, XMOD, YMOD: Integer; UpText: String;): Boolean;
 Description: Uses CTS Modifiers to find things
 *******************************************************************************}
-function UseCTS(COL: Integer; HUE, SAT: Extended; Width, Height, TOL, XMOD, YMOD: Integer; UpText: String): Boolean;
+function UseCTS(COL: Integer; HUE, SAT: Extended; Width, Height, TOL, XMOD, YMOD: Integer; SortPoint: TPoint; UpText: String): Boolean;
 var
   TPA   : TPointArray;
   ATPA  : T2DPointArray;
@@ -325,7 +329,7 @@ begin
       Exit;
     end;
     Writeln('Sorting useCTS');
-    SortATPAFromFirstPoint(ATPA, Point(MSCX, MSCY));
+    SortATPAFromFirstPoint(ATPA, Point(SortPoint.x, SortPoint.y));
     h := High(ATPA);
     for i := 0 to h do
     begin
@@ -333,6 +337,8 @@ begin
       if (TB.X2 - TB.X1 <= Width) and (TB.Y2 - TB.Y1 <= Height) then
       begin
         MiddleTPAEx(ATPA[i], x, y);
+        if PointInBox(Point(x, y), IntToBox(MSCX - 4, MSCY - 23, MSCX + 4, MSCY - 10)) then
+          Continue;
         MMouse(x + XMOD, y + YMOD, 2, 2);
         if WaitUpText(UpText, RandomRange(250, 350)) then
         begin
@@ -431,7 +437,7 @@ Description: Finds the duke.
 *******************************************************************************}
 function FindDuke : Boolean;
 begin
-  Result := (UseCTS(DH_COL, DH_HUE, DH_SAT, DH_W, DH_H, DH_TOL, DH_XMOD, DH_YMOD, DH_UPT));
+  Result := (UseCTS(DH_COL, DH_HUE, DH_SAT, DH_W, DH_H, DH_TOL, DH_XMOD, DH_YMOD, Point(MSX2, MSY2), DH_UPT));
 end;
 
 {*******************************************************************************
@@ -492,6 +498,31 @@ begin
 end;
 
 {*******************************************************************************
+function R_LoadPath(Path: Integer): TPointArray;
+Description: Loads Reflection Path
+*******************************************************************************}
+function R_LoadPath(Path: Integer): TPointArray;
+begin
+  case Path of
+    R_LTT:  Result := [Point(3225, 3217), Point(3228, 3217), Point(3231, 3217),
+                       Point(3233, 3213), Point(3232, 3210), Point(3227, 3205),
+                       Point(3223, 3200), Point(3218, 3199), Point(3211, 3199),
+                       Point(3205, 3199), Point(3200, 3199), Point(3195, 3202),
+                       Point(3191, 3205), Point(3187, 3207), Point(3182, 3207),
+                       Point(3175, 3208), Point(3171, 3208), Point(3167, 3208),
+                       Point(3163, 3209), Point(3160, 3210), Point(3157, 3212),
+                       Point(3153, 3214), Point(3148, 3215), Point(3143, 3214),
+                       Point(3140, 3210), Point(3138, 3208), Point(3134, 3205),
+                       Point(3130, 3204), Point(3125, 3205), Point(3119, 3205),
+                       Point(3116, 3207), Point(3113, 3204), Point(3113, 3198),
+                       Point(3113, 3194), Point(3113, 3189), Point(3113, 3185),
+                       Point(3113, 3180), Point(3113, 3175), Point(3113, 3170),
+                       Point(3112, 3167), Point(3109, 3166)];
+    R_LTV:  Result := [];
+  end;
+end;
+
+{*******************************************************************************
 procedure ScriptTerminate;
 Description: Last things to execute when script has finished or terminated.
 *******************************************************************************}
@@ -549,8 +580,6 @@ Description: Lets start, k?
 *******************************************************************************}
 function StartQuest: Boolean;
 var
-  T, cx, cy: Integer;
-  TPA : TPointArray;
   Box: TBox;
 begin
   Cast('lumbridge home teleport', False);
@@ -588,6 +617,25 @@ begin
   end;
 end;
 
+{*******************************************************************************
+function WalkToTower: Boolean;
+Description: Walk to The Tower
+*******************************************************************************}
+function WalkToTower: Boolean;
+begin
+  SetAngle(True);
+  MakeCompass('n');
+  SetRun(True);
+  case RefWalk of
+    True: begin
+            Writeln('Walking to tower [Ref]');
+
+            if (WalkPath(R_LoadPath(R_LTT))) then
+              Writeln('At the Tower');
+          end;
+    False: Exit;
+  end;
+end;
 
 {*******************************************************************************
 procedure MainLoop;
@@ -598,17 +646,16 @@ begin
   SetupRS(True);
 
   StartQuest;
-  WalkToTower;
 
   SetAngle(True);
-  Writeln('Walking to tower');
-  //TerminateScript;
+  WalkToTower;
 end;
 
 begin
   AddOnTerminate('ScriptTerminate');
   SetupSmart;
   SetupSRL;
+  SetupReflectionEx(true);
   MouseSpeed := MOUSE_SPEED;
   DeclarePlayers;
   SetupSpells;
