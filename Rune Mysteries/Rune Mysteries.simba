@@ -48,8 +48,8 @@ program RuneMysteries;
 *******************************************************************************}
 
 const
-  RefWalk = True; // True: Use Reflection for walking
-                  // False: USe Colour
+  UseRef = True;  // True: Use Reflection for script
+                  // False: Use Colour
 
 procedure SetupSmart;
 begin
@@ -67,7 +67,7 @@ begin
 
   with Players[0] do
   begin
-    Name        := 'b6a7gue14demex@btyahoo.com';
+    Name        := 'qyzkkbud@lol.com';
     Pass        := 'scripttest';
     Nick        := 'iki';
     BoxRewards  := ['Lamp', 'Coins'];           // Box Reward
@@ -112,8 +112,10 @@ const
     SCRIPT_VER  = 0.01;
     MOUSE_SPEED = 11;
   // Ref
-    R_LTT = 0; // Lumbridge to Tower
-    R_LTV = 1; // Lumbridge to Varrock
+    R_WALK_LS = 0; // Lumbridge Stairs
+    R_WALK_LD = 1; // Lumbridge Duke
+    R_WALK_LT = 2; // Lumbridge to Tower
+    R_WALK_LV = 3; // Lumbridge to Varrock
 
   // Lumby Stair Info
     LS_COL          = 4871776;
@@ -210,6 +212,24 @@ begin
 end;
 
 {*******************************************************************************
+function R_SecondFloor : Boolean;
+Description: [REF] Returns True if on the second floor
+*******************************************************************************}
+function R_SecondFloor : Boolean;
+var
+  t: TTile;
+begin
+  t := GetMyPos;
+  while (not (t = Tile(3205, 3228)) or (t = Tile(3206, 3229))) do
+  begin
+    Wait(RandomRange(500, 800));
+    t := GetMyPos;
+  end;
+  Result := True;
+  Writeln('On Second Floor');
+end;
+
+{*******************************************************************************
 function SecondFloor : Boolean;
 Description: Returns True if on the second floor
 *******************************************************************************}
@@ -219,6 +239,30 @@ var
 begin
   //Result := CountColorTolerance(131333, MMX1, MMY1, MMX2, MMY2, 4) > 1200;
   Result := (not(FindSymbol(X, Y, 'water')));
+end;
+
+{*******************************************************************************
+function R_UpLumbridgeStairs: Boolean;
+Description: [REF] Returns True if stairs are successfully climbed
+*******************************************************************************}
+function R_UpLumbridgeStairs: Boolean;
+var
+  TP: TPoint;
+  i: Integer;
+begin
+  for i := 1 to 3 do
+  begin
+    TP := TileToMS(GetObjectAt(Tile(3204, 3229), OBJECT_TYPE_INTERACTABLE).Tile, 1);
+    R_Debug(IntToStr(TP.x) + ',' + IntToSTr(TP.y), '');
+    Mouse(TP.x, TP.y, 2, 2, False);
+    if WaitOption('up', 300 + Random(300)) then
+    begin
+      Result := True;
+      Writeln('Climbed Stairs');
+      Exit;
+    end;
+    Wait(RandomRange(500, 800));
+  end;
 end;
 
 {*******************************************************************************
@@ -460,6 +504,29 @@ begin
 end;
 
 {*******************************************************************************
+function R_FindLumbyDoor: Boolean;
+Description: [REF] Opens Door
+*******************************************************************************}
+function R_FindLumbyDoor: Boolean;
+var
+  TP: TPoint;
+begin
+  TP := TileToMS(GetObjectByID(36844, OBJECT_TYPE_INTERACTABLE, 52).Tile, 1);
+  DumpObjects([GetObjectByID(36844, OBJECT_TYPE_INTERACTABLE, 52), GetObjectAt(Tile(3208, 3222), OBJECT_TYPE_INTERACTABLE), GetInteractableAt(Tile(3208, 3222)), GetInteractableAt(Tile(3207, 3222))]);
+  R_Debug(IntToStr(TP.x) + ',' + IntToSTr(TP.y), '');
+  if not (TP = Point(-1, -1)) then
+  begin
+    Writeln('Door Closed');
+    Mouse(TP.x, TP.y, 2, 2, False);
+    if WaitOption('pen', 300 + Random(300)) then
+      Result := True;
+  end else
+  begin
+    Writeln('Door Open');
+    Result := True;
+  end;
+end;
+{*******************************************************************************
 function FindLumbyDoor: Boolean;
 Description: Opens door
 *******************************************************************************}
@@ -469,12 +536,21 @@ begin
 end;
 
 {*******************************************************************************
-function FindLumbyDoor: Boolean;
+function FindTowerDoor: Boolean;
 Description: Opens door
 *******************************************************************************}
 function FindTowerDoor: Boolean;
 begin
   Result := (_FindDoor(TD_COL, TD_HUE, TD_SAT, TD_W, TD_H, TD_TOL, TD_XMOD, TD_YMOD, Point(MSCX, MSCY), TD_UPT));
+end;
+
+{*******************************************************************************
+function R_FindDuke: Boolean;
+Description: [REF]Finds the duke.
+*******************************************************************************}
+function R_FindDuke: Boolean;
+begin
+  Result := (UseCTS(DH_COL, DH_HUE, DH_SAT, DH_W, DH_H, DH_TOL, DH_XMOD, DH_YMOD, Point(MSX2, MSY2), DH_UPT));
 end;
 
 {*******************************************************************************
@@ -546,31 +622,6 @@ begin
 end;
 
 {*******************************************************************************
-function R_LoadPath(Path: Integer): TPointArray;
-Description: Loads Reflection Path
-*******************************************************************************}
-function R_LoadPath(Path: Integer): TPointArray;
-begin
-  case Path of
-    R_LTT:  Result := [Point(3225, 3217), Point(3228, 3217), Point(3231, 3217),
-                       Point(3233, 3213), Point(3232, 3210), Point(3227, 3205),
-                       Point(3223, 3200), Point(3218, 3199), Point(3211, 3199),
-                       Point(3205, 3199), Point(3200, 3199), Point(3195, 3202),
-                       Point(3191, 3205), Point(3187, 3207), Point(3182, 3207),
-                       Point(3175, 3208), Point(3171, 3208), Point(3167, 3208),
-                       Point(3163, 3209), Point(3160, 3210), Point(3157, 3212),
-                       Point(3153, 3214), Point(3148, 3215), Point(3143, 3214),
-                       Point(3140, 3210), Point(3138, 3208), Point(3134, 3205),
-                       Point(3130, 3204), Point(3125, 3205), Point(3119, 3205),
-                       Point(3116, 3207), Point(3113, 3204), Point(3113, 3198),
-                       Point(3113, 3194), Point(3113, 3189), Point(3113, 3185),
-                       Point(3113, 3180), Point(3113, 3175), Point(3113, 3170),
-                       Point(3112, 3167), Point(3109, 3166)];
-    R_LTV:  Result := [];
-  end;
-end;
-
-{*******************************************************************************
 procedure ScriptTerminate;
 Description: Last things to execute when script has finished or terminated.
 *******************************************************************************}
@@ -601,68 +652,112 @@ end;
 *******************************************************************************}
 
 
-
-
-{*******************************************************************************
-                              Commented Code
-*******************************************************************************}
-        {if ((CountColorTolerance(5598335, MSCX + 7, MSCY - 40, MSCX + 29, MSCY + 7, 24) > 200)) then
-        begin
-          Writeln('Door Closed');
-          if (not(WaitFunc(@FindDoor, 100, 20000))) then
-          begin
-            writeln('Failed door finding');
-            Terminatescript;
-          end;
-        end else
-          Writeln('Door Open');}
-
-
-{*******************************************************************************
-                             End Commented Code
-*******************************************************************************}
-
-{*******************************************************************************
-function StartQuest: Boolean;
-Description: Lets start, k?
-*******************************************************************************}
-function StartQuest: Boolean;
-var
-  Box: TBox;
+////////////////
+procedure FindObjNear;
+var myObj : TRSObject;
+    myTile, newTile : TTile;
 begin
-  Cast('lumbridge home teleport', False);
-  Wait(15000 + Random(4000));
-  Writeln('In Lumbridge');
-  SetAngle(True);
-  Writeln('Fixed the compass angle');
-  if WalkTo(9145483, 19, 0, 0, Point(569, 52), Box) then
-  begin
-    Writeln('Walked to the stair case');
-    if (UpLumbridgeStairs(LS_COL, LS_TOL, LS_ATPA_WIDTH, LS_WIDTH, LS_HEIGHT, LS_XMOD, LS_YMOD, LS_UPTEXT, LS_OPTION)) then
-    begin
-      Wait(1500 + Random(1500));
-      Writeln('Arrived at the second floor');
-      // Maybe we should constant this info
-      if (WalkTo(263409, 12, 0, 0, Point(638, 111), PointToBox(Point(633, 86), Point(639, 92)))) then
+  if not LoggedIn then exit;
+  myTile := GetMyPos;
+  writeln ('[--Objects--]');
+  newTile := Tile((myTile.x-1),myTile.y);
+  MyObj := GetObjectAt(newTile, OBJECT_TYPE_INTERACTABLE);
+    if MyObj.ID > 0 then
       begin
-        Writeln('Arrived at door');
-        if (not(WaitFunc(@FindLumbyDoor, 100, 20000))) then
-        begin
-          Writeln('Failed door finding');
-          Exit;
-        end;
-        Wait(2500 + Random(2000));
-        if (TalkToDuke) then
-        begin
-          ChatWithDuke;
-          Result := True;
-          Cast('lumbridge home teleport', False);
-          Wait(15000 + Random(4000));
-          Exit;
-        end;
+      writeln ('(W)');
+      writeln ('ID: '+inttostr(MyObj.ID)+', Tile('+inttostr(MyObj.Tile.x)+','+inttostr(MyObj.Tile.y)+')');
       end;
-    end;
+
+  newTile := Tile((myTile.x),myTile.y-1);
+  MyObj := GetObjectAt(newTile, OBJECT_TYPE_INTERACTABLE);
+    if MyObj.ID > 0 then
+      begin
+      writeln ('(S)');
+      writeln ('ID: '+inttostr(MyObj.ID)+', Tile('+inttostr(MyObj.Tile.x)+','+inttostr(MyObj.Tile.y)+')');
+      end;
+
+  newTile := Tile((myTile.x+1),myTile.y);
+  MyObj := GetObjectAt(newTile, OBJECT_TYPE_INTERACTABLE);
+    if MyObj.ID > 0 then
+      begin
+      writeln ('(E)');
+      writeln ('ID: '+inttostr(MyObj.ID)+', Tile('+inttostr(MyObj.Tile.x)+','+inttostr(MyObj.Tile.y)+')');
+      end;
+
+  newTile := Tile((myTile.x),myTile.y+1);
+  MyObj := GetObjectAt(newTile, OBJECT_TYPE_INTERACTABLE);
+    if MyObj.ID > 0 then
+      begin
+      writeln ('(N)');
+      writeln ('ID: '+inttostr(MyObj.ID)+', Tile('+inttostr(MyObj.Tile.x)+','+inttostr(MyObj.Tile.y)+')');
+      end;
+end;
+
+{*******************************************************************************
+function R_LoadPath(Path: Integer): TPointArray;
+Description: [REF] Loads Reflection Path
+*******************************************************************************}
+function R_LoadPath(Path: Integer): TPointArray;
+begin
+  case Path of
+    R_WALK_LS:  Result := [Point(3221, 3217), Point(3215, 3217), Point(3215, 3222),
+                           Point(3214, 3226), Point(3210, 3226), Point(3206, 3227)];
+    R_WALK_LD:  Result := [Point(3206, 3222)];
+    R_WALK_LT:  Result := [Point(3225, 3217), Point(3228, 3217), Point(3231, 3217),
+                           Point(3233, 3213), Point(3232, 3210), Point(3227, 3205),
+                           Point(3223, 3200), Point(3218, 3199), Point(3211, 3199),
+                           Point(3205, 3199), Point(3200, 3199), Point(3195, 3202),
+                           Point(3191, 3205), Point(3187, 3207), Point(3182, 3207),
+                           Point(3175, 3208), Point(3171, 3208), Point(3167, 3208),
+                           Point(3163, 3209), Point(3160, 3210), Point(3157, 3212),
+                           Point(3153, 3214), Point(3148, 3215), Point(3143, 3214),
+                           Point(3140, 3210), Point(3138, 3208), Point(3134, 3205),
+                           Point(3130, 3204), Point(3125, 3205), Point(3119, 3205),
+                           Point(3116, 3207), Point(3113, 3204), Point(3113, 3198),
+                           Point(3113, 3194), Point(3113, 3189), Point(3113, 3185),
+                           Point(3113, 3180), Point(3113, 3175), Point(3113, 3170),
+                           Point(3112, 3167), Point(3109, 3166)];
+    R_WALK_LV:  Result := [Point(3222, 3217), Point(3227, 3217), Point(3230, 3217),
+                           Point(3233, 3217), Point(3236, 3219), Point(3236, 3222),
+                           Point(3238, 3224), Point(3242, 3224), Point(3246, 3224),
+                           Point(3251, 3224), Point(3254, 3225), Point(3257, 3227),
+                           Point(3259, 3231), Point(3260, 3233), Point(3260, 3238),
+                           Point(3258, 3243), Point(3256, 3247), Point(3254, 3250),
+                           Point(3251, 3254), Point(3250, 3258), Point(3250, 3262),
+                           Point(3250, 3267), Point(3248, 3269), Point(3246, 3273),
+                           Point(3244, 3276), Point(3241, 3279), Point(3239, 3283),
+                           Point(3239, 3287), Point(3239, 3293), Point(3239, 3298),
+                           Point(3239, 3304), Point(3242, 3308), Point(3245, 3312),
+                           Point(3249, 3315), Point(3251, 3318), Point(3253, 3321),
+                           Point(3255, 3322), Point(3258, 3323), Point(3262, 3324),
+                           Point(3266, 3325), Point(3269, 3327), Point(3270, 3331),
+                           Point(3274, 3333), Point(3279, 3334), Point(3280, 3338),
+                           Point(3284, 3339), Point(3286, 3342), Point(3287, 3346),
+                           Point(3289, 3349), Point(3293, 3351), Point(3296, 3355),
+                           Point(3297, 3359), Point(3296, 3363), Point(3294, 3368),
+                           Point(3294, 3373), Point(3293, 3378), Point(3293, 3384),
+                           Point(3293, 3388), Point(3292, 3393), Point(3291, 3399),
+                           Point(3293, 3404), Point(3292, 3408), Point(3289, 3412),
+                           Point(3287, 3416), Point(3287, 3420), Point(3285, 3425),
+                           Point(3283, 3428), Point(3279, 3429), Point(3276, 3429),
+                           Point(3270, 3429), Point(3266, 3427), Point(3266, 3423),
+                           Point(3266, 3419), Point(3264, 3415), Point(3260, 3413),
+                           Point(3259, 3409), Point(3258, 3404), Point(3257, 3400),
+                           Point(3254, 3398), Point(3253, 3402)];
   end;
+end;
+
+{*******************************************************************************
+function R_WalkTo(Path: Integer): Boolean;
+Description: [REF] Walk to ...
+*******************************************************************************}
+function R_WalkTo(Path: Integer): Boolean;
+begin
+  SetAngle(True);
+  MakeCompass('n');
+  SetRun(True);
+  if (WalkPath(R_LoadPath(Path))) then
+    Result := True;
 end;
 
 {*******************************************************************************
@@ -674,11 +769,11 @@ begin
   SetAngle(True);
   MakeCompass('n');
   SetRun(True);
-  case RefWalk of
+  case UseRef of
     True: begin
             Writeln('Walking to tower [Ref]');
 
-            if (WalkPath(R_LoadPath(R_LTT))) then
+            if (R_WalkTo(R_WALK_LT)) then
             begin
               Writeln('At the Tower');
               Result := True;
@@ -730,6 +825,75 @@ begin
 end;
 
 {*******************************************************************************
+function R_StartQuest: Boolean;
+Description: Lets start, k?
+*******************************************************************************}
+function R_StartQuest: Boolean;
+begin
+  if R_WalkTo(R_WALK_LS) then
+    if R_UpLumbridgeStairs then
+      if R_SecondFloor then
+        if R_WalkTo(R_WALK_LD) then
+          if R_FindLumbyDoor then
+            Result := True;
+end;
+
+{*******************************************************************************
+function StartQuest: Boolean;
+Description: Lets start, k?
+*******************************************************************************}
+function StartQuest: Boolean;
+var
+  Box: TBox;
+begin
+  Cast('lumbridge home teleport', False);
+  Wait(15000 + Random(4000));
+  Writeln('In Lumbridge');
+  SetAngle(True);
+  Writeln('Fixed the compass angle');
+  if UseRef then
+    if R_StartQuest then
+    begin
+      Result := True;
+      Cast('lumbridge home teleport', False);
+      Wait(15000 + Random(4000));
+      Exit;
+    end else
+    begin
+      Writeln('[REF] Failed');
+      Exit;
+    end;
+  if WalkTo(9145483, 19, 0, 0, Point(569, 52), Box) then
+  begin
+    Writeln('Walked to the stair case');
+    if (UpLumbridgeStairs(LS_COL, LS_TOL, LS_ATPA_WIDTH, LS_WIDTH, LS_HEIGHT, LS_XMOD, LS_YMOD, LS_UPTEXT, LS_OPTION)) then
+    begin
+      Wait(1500 + Random(1500));
+      Writeln('Arrived at the second floor');
+      // Maybe we should constant this info
+      if (WalkTo(263409, 12, 0, 0, Point(638, 111), PointToBox(Point(633, 86), Point(639, 92)))) then
+      begin
+        Writeln('Arrived at door');
+        if (not(WaitFunc(@FindLumbyDoor, 100, 20000))) then
+        begin
+          Writeln('Failed door finding');
+          Exit;
+        end;
+        Wait(2500 + Random(2000));
+        if (TalkToDuke) then
+        begin
+          ChatWithDuke;
+          Result := True;
+          Cast('lumbridge home teleport', False);
+          Wait(15000 + Random(4000));
+          Exit;
+        end;
+      end;
+    end;
+  end;
+end;
+
+{*******************************************************************************
 procedure MainLoop;
 Description: The Main Loop :)
 *******************************************************************************}
@@ -738,10 +902,13 @@ begin
   SetupRS(True);
 
   //StartQuest;
-
+  R_FindLumbyDoor;
   //SetAngle(True);
   //WalkToTower;
-  CompleteTower;
+  //CompleteTower;
+  FindObjNear;
+  //R_StartQuest;
+  //R_Debug(IntToStr(GetMyPos.x) + ',' + IntToStr(GetMyPos.y), '');
 end;
 
 begin
