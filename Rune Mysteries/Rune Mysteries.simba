@@ -39,9 +39,11 @@
 
 program RuneMysteries;
 {$DEFINE SMART} // Comment line if not using SMART
-{$I SRL/SRL.scar}
-{$I Reflection/Reflection.simba}
-{$I SRL/SRL/Skill/Magic.scar}
+{$I SRL\SRL.scar}
+{$I SRL\SRL\Skill\Magic.scar}
+{$I Reflection\Reflection.simba}
+{$I SRL\SRL\Misc\PaintSMART.scar}
+{$I Reflection\Core\RefPaint.simba}
 
 {******************************************************************************)
                                   Setup Here
@@ -67,9 +69,9 @@ begin
 
   with Players[0] do
   begin
-    Name        := 'qyzkkbud@lol.com';
+    Name        := 'mbudik1fng9vso@btyahoo.com';//'qyzkkbud@lol.com';
     Pass        := 'scripttest';
-    Nick        := 'iki';
+    Nick        := 'chm';
     BoxRewards  := ['Lamp', 'Coins'];           // Box Reward
     LampSkill   := 'Prayer';                    // Skill to advance with Lamp Reward
     Active      := True;                        // Active ?
@@ -116,6 +118,9 @@ const
     R_WALK_LD = 1; // Lumbridge Duke
     R_WALK_LT = 2; // Lumbridge to Tower
     R_WALK_LV = 3; // Lumbridge to Varrock
+  // Interfaces
+    INTERFACE_CHAT_XOFFSET = 7;
+    INTERFACE_CHAT_YOFFSET = 347;
 
   // Lumby Stair Info
     LS_COL          = 4871776;
@@ -510,16 +515,17 @@ Description: [REF] Opens Door
 function R_FindLumbyDoor: Boolean;
 var
   TP: TPoint;
+  o: TRSObject;
 begin
-  TP := TileToMS(GetObjectByID(36844, OBJECT_TYPE_INTERACTABLE, 52).Tile, 1);
-  DumpObjects([GetObjectByID(36844, OBJECT_TYPE_INTERACTABLE, 52), GetObjectAt(Tile(3208, 3222), OBJECT_TYPE_INTERACTABLE), GetInteractableAt(Tile(3208, 3222)), GetInteractableAt(Tile(3207, 3222))]);
+  o := GetObjectByID(36845, OBJECT_TYPE_WALLOBJECT, 30);
+  DumpObjects([o]);
   R_Debug(IntToStr(TP.x) + ',' + IntToSTr(TP.y), '');
-  if not (TP = Point(-1, -1)) then
+  if (o = NULL_RSOBJECT) then
   begin
     Writeln('Door Closed');
-    Mouse(TP.x, TP.y, 2, 2, False);
-    if WaitOption('pen', 300 + Random(300)) then
-      Result := True;
+
+    Result := (_FindDoor(LD_COL, LD_HUE, LD_SAT, LD_W, LD_H, LD_TOL, LD_XMOD, LD_YMOD, Point(MSCX, MSCY), LD_UPT));
+    {CANT INTERACT WITH REFLECTION ?}
   end else
   begin
     Writeln('Door Open');
@@ -546,11 +552,35 @@ end;
 
 {*******************************************************************************
 function R_FindDuke: Boolean;
-Description: [REF]Finds the duke.
+Description: [REF] Finds the duke.
 *******************************************************************************}
 function R_FindDuke: Boolean;
+var
+  NPC: TNPC;
+  TP: TPoint;
+  i: Integer;
 begin
-  Result := (UseCTS(DH_COL, DH_HUE, DH_SAT, DH_W, DH_H, DH_TOL, DH_XMOD, DH_YMOD, Point(MSX2, MSY2), DH_UPT));
+  for i := 1 to 4 do
+  begin
+    FindNPC(741, NPC);
+    if NPC.Moving then
+    begin
+      Writeln('Duke Moving');
+      Wait(800 + RandomRange(100, 300));
+      Continue;
+    end;
+    //DumpNPCs([NPC]);
+    TP := TileToMS(NPC.Tile, 1);
+    Mouse(TP.x, TP.y, 2, 2, True);
+    Wait(800 + Random(300));
+    while not IsIdle do
+      Wait(400);
+    if FindNPCText('eetin') then
+    begin
+      Result := True;
+      Exit;
+    end;
+  end;
 end;
 
 {*******************************************************************************
@@ -593,7 +623,37 @@ begin
 end;
 
 {*******************************************************************************
-function ChatWithDuke : Boolean;
+procedure R_ChatWithDuke;
+Description: [REF] Chats with him.
+*******************************************************************************}
+procedure R_ChatWithDuke;
+var
+  i : Integer;
+//  TP: TPoint;
+begin
+  while not R_ClickToContinue do
+    Wait(RandomRange(500, 1500));
+
+  Wait(RandomRange(500, 1500));
+ // TP := GetChildComponentScreenPosition(14942208, 2, 2
+  Wait(RandomRange(500, 1500));
+
+  for i := 1 to 4 do
+    while not R_ClickToContinue do
+      Wait(RandomRange(500, 1500));
+  Wait(RandomRange(500, 1500));
+
+  MouseBox(129, 294, 214, 310, 1);
+  Wait(RandomRange(500, 1500));
+
+  for i := 1 to 4 do
+    while not R_ClickToContinue do
+      Wait(RandomRange(500, 1500));
+  Wait(RandomRange(500, 1500));
+end;
+
+{*******************************************************************************
+procedure ChatWithDuke;
 Description: Chats with him.
 *******************************************************************************}
 procedure ChatWithDuke;
@@ -894,21 +954,72 @@ begin
 end;
 
 {*******************************************************************************
+function R_ChatOption(InterfaceID, ComponentID: Integer): boolean;
+Description: Uses interface ID's to select a chat option
+*******************************************************************************}
+function R_ChatOption(InterfaceID, ComponentID: Integer): boolean;
+var
+  TP: TPoint;
+  w, h: Integer;
+begin
+  if ValidInterface(InterfaceID) then
+  begin
+    Writeln('Message: ' + GetInterfaceText(InterfaceID, ComponentID));
+    TP := GetInterfaceComponentRelativePoint(InterfaceID, ComponentID);
+    w := GetInterfaceComponentWidth(InterfaceID, ComponentID);
+    h := GetInterfaceComponentHeight(InterfaceID, ComponentID)
+    Writeln('Relative Pos: ' + IntToStr(TP.X) + ',' + IntToStr(TP.y));
+    Writeln('Width: ' + IntToStr(w));
+    Writeln('Height: ' + IntToStr(h));
+    TP.x := RandomRange(TP.x + INTERFACE_CHAT_XOFFSET, TP.x + INTERFACE_CHAT_XOFFSET + w);
+    TP.y := RandomRange(TP.y + INTERFACE_CHAT_YOFFSET, TP.y + INTERFACE_CHAT_YOFFSET + h);
+    Writeln('Random Pos: ' + IntToStr(TP.X) + ',' + IntToStr(TP.y));
+    Mouse(TP.x, TP.y, 0, 0, True);
+    Result := True;
+  end else
+    Result := False;
+end;
+
+{*******************************************************************************
 procedure MainLoop;
 Description: The Main Loop :)
 *******************************************************************************}
 procedure MainLoop;
+var
+  TP: TPoint;
 begin
-  SetupRS(True);
+  //SetupRS(True);
 
   //StartQuest;
-  R_FindLumbyDoor;
+  //R_FindLumbyDoor;
   //SetAngle(True);
   //WalkToTower;
   //CompleteTower;
-  FindObjNear;
+  //FindObjNear;
+  //LogInPlayer;
+ // MakeCompass('e');
+  //SetAngle(True);
+  //R_DebugNPCs(True);
+  //R_DebugObjects(OBJECT_TYPE_INTERACTABLE, True, clRed);
+  //Wait(10000);
+  //R_DebugObjects(OBJECT_TYPE_WALLOBJECT, False, clBlue);
+  //Wait(10000);
+  //R_DebugObjects(OBJECT_TYPE_WALLDECOR, True, clGreen);
+  //Wait(10000);
+  //R_DebugObjects(OBJECT_TYPE_FLOORDECOR, True, clBlack);
   //R_StartQuest;
   //R_Debug(IntToStr(GetMyPos.x) + ',' + IntToStr(GetMyPos.y), '');
+  //R_FindDuke;
+
+  {Writeln(GetInterfaceText(228, 2));
+  TP := GetInterfaceComponentRelativePoint(228, 2);
+  Writeln(IntToStr(TP.X) + ',' + IntToStr(TP.y));
+  TP.x := RandomRange(TP.x + 7, TP.x + 7 + GetInterfaceComponentWidth(228, 2));
+  TP.y := RandomRange(TP.y + 347, TP.y + 347 + GetInterfaceComponentHeight(228, 2));
+  Writeln(IntToStr(TP.X) + ',' + IntToStr(TP.y));
+  MMouse(TP.x, TP.y, 0, 0);  }
+  //TB := GetChildComponentScreenPosition(228
+  R_ChatOption(228, 2);
 end;
 
 begin
